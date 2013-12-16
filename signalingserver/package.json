@@ -1,0 +1,16 @@
+{
+  "name": "cloudrendering-manager",
+  "version": "0.0.1",
+  "description": "Room Management & Signaling for FIWARE Cloud Rendering ",
+  "main": "server.js",
+  "dependencies": {
+    "ws": "~0.4.31",
+    "underscore": "~1.5.2",
+    "node-uuid": "~1.4.1",
+    "log4js": "~0.6.9"
+  },
+  "devDependencies": {
+    "lorem-ipsum": "~0.1.1",
+    "optimist": "~0.6.0"
+  }
+}

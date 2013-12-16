@@ -1,0 +1,16 @@
+{{layout "layout"}}
+<h1>${title}</h1>
+<p>Testing Chrome media & webrtc features</p>
+<h2>navigator.getUserMedia tests</h2>
+<ul>
+    <li><a href="/tests/camera">Camera Test</a></li>
+    <li><a href="/tests/screen">Screen Capture Test</a>
+        <p class="requires">Requires a HTTPS-connection. Requires <a href="chrome://flags/#enable-usermedia-screen-capture">chrome://flags/#enable-usermedia-screen-capture</a> to be enabled in Chrome.</p>
+    </li>
+</ul>
+
+<h2>RTCPeerConnection tests</h2>
+<ul>
+    <li><a href="/tests/localstream">Local Stream test</a></li>
+    <li>Remote Stream <a href="/service/receiver?renderer=true">Sender</a> and <a href="/service/receiver">Receiver</a> test</li>
+</ul>

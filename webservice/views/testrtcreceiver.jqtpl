@@ -1,0 +1,108 @@
+{{layout "layout"}}
+<style>
+    .videoInstance { width: 40%; float: left; margin: 10px; border: 1px solid black; }
+    video { width: 100%; }
+    .videos:after {
+        content: ".";
+        display: block;
+        height: 0;
+        clear: both;
+        visibility: hidden;
+    }
+</style>
+<h1>RTCPeerConnection localstream</h1>
+
+<div class="videos">
+    <div class="videoInstance">
+        <video id="localVideo" autoplay></video>
+        <p>Local camera stream</p>
+    </div>
+</div>
+
+<script>
+    var localStream, peerConnection;
+    var localVideo = document.getElementById("localVideo");
+
+    peerConnection = createPeerConnection();
+
+    function trace(text) {
+      console.log((performance.now() / 1000).toFixed(3) + ": " + text);
+    }
+
+    //Apply created stream to a dom element;
+    function gotStream(stream){
+      trace("Received local stream");
+      localVideo.src = URL.createObjectURL(stream);
+      localStream = stream;
+      // call();
+    }
+
+    //Get camera stream
+    function start() {
+      trace("Requesting local stream");
+
+      navigator.getUserMedia = navigator.getUserMedia ||
+        navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+      navigator.getUserMedia({video:true}, gotStream,
+        function(error) {
+          trace("navigator.getUserMedia error: ", error);
+        });
+    }
+
+    //Connect
+    function createPeerConnection() {
+      trace("Creating PeerConnection");
+
+      var servers = null;
+      var connection = new webkitRTCPeerConnection(servers);
+      trace("Created peer connection object");
+      connection.onicecandidate = gotLocalIceCandidate;
+
+      localPeerConnection.createOffer(gotLocalDescription);
+    }
+
+    function gotLocalDescription(description){
+      localPeerConnection.setLocalDescription(description);
+      trace("Offer from localPeerConnection: \n" + description.sdp);
+      remotePeerConnection.setRemoteDescription(description);
+      remotePeerConnection.createAnswer(gotRemoteDescription);
+    }
+
+    function gotRemoteDescription(description){
+      remotePeerConnection.setLocalDescription(description);
+      trace("Answer from remotePeerConnection: \n" + description.sdp);
+      localPeerConnection.setRemoteDescription(description);
+    }
+
+    function hangup() {
+      trace("Ending call");
+      localPeerConnection.close();
+      remotePeerConnection.close();
+      localPeerConnection = null;
+      remotePeerConnection = null;
+      hangupButton.disabled = true;
+      callButton.disabled = false;
+    }
+
+    function gotRemoteStream(event){
+      remoteVideo.src = URL.createObjectURL(event.stream);
+      trace("Received remote stream");
+    }
+
+    function gotLocalIceCandidate(event){
+      if (event.candidate) {
+        remotePeerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        trace("Local ICE candidate: \n" + event.candidate.candidate);
+      }
+    }
+
+    function gotRemoteIceCandidate(event){
+      if (event.candidate) {
+        localPeerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        trace("Remote ICE candidate: \n " + event.candidate.candidate);
+      }
+    }
+
+
+</script>

@@ -1,0 +1,21 @@
+{{layout "layout"}}
+<h1>Displaying video from user's camera</h1>
+<video></video>
+
+<script>
+    var constrains = { video: true };
+
+    function successCB(stream){
+        console.log('Success');
+        var video = document.querySelector('video');
+        video.src = window.URL.createObjectURL(stream);
+        video.play();
+    }
+
+    function errorCB(error){
+        console.log("navigator.getUserMedia error: ", error);
+    }
+
+    navigator.webkitGetUserMedia(constrains, successCB, errorCB);
+
+</script>

@@ -1,0 +1,26 @@
+{{layout "layout"}}
+<h1>Displaying video from user's screen</h1>
+<video></video>
+
+<script>
+    var constrains = { 
+        video: {
+            mandatory: {
+                chromeMediaSource: 'screen'
+            }
+        }
+    };
+
+    function successCB(stream){
+        var video = document.querySelector('video');
+        video.src = window.URL.createObjectURL(stream);
+        video.play();
+    }
+
+    function errorCB(error){
+        console.log("navigator.getUserMedia error: ", error);
+    }
+
+    navigator.webkitGetUserMedia(constrains, successCB, errorCB);
+
+</script>
