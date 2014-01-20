@@ -19,16 +19,18 @@ function TestClient(options ) {
     this.type = 'renderer';
   }
 
-  this.controlsHandler = new ControlsHandler('.video', function(arg) { console.log( 'CB: ', arg); });
+  this.controlsHandler = new ControlsHandler('.video', this.RTCsend.bind( this ));
 
   this.options = options ||  this.defaults;
 
   window.g = this;
+  window.M = Message;
 
   this.nick = loremIpsum({
     count: 1,
     units: 'words'
   });
+
   this.clientList = {};
   this.socket = new WebSocket(this.options.host);
 
@@ -48,8 +50,16 @@ function TestClient(options ) {
   if (argv.talk) {
     this.autoTalk();
   }
-
 }
+
+TestClient.prototype.RTCsend = function( data ){
+  if ( this.peerConnection.channel ) {
+    var message = new Message( 'Application', 'PeerCustomMessage');
+    message.setData( { payload: data } );
+    console.log( message.toString() );
+    this.peerConnection.channel.send( message.toJSON() );
+  }
+};
 
 TestClient.prototype.domShit = function() {
   var that = this;
@@ -180,10 +190,10 @@ TestClient.prototype.signalingMessageHandler = function(message) {
 };
 
 TestClient.prototype.applicationMessageHandler = function(message) {
-  var payload = message.getDataProp('payload');
+  var payload = message.getDataProp('payload'), element;
 
   if (payload.hasOwnProperty('message')) {
-    var element = document.querySelector('.messages');
+    element = document.querySelector('.messages');
     var container = document.createElement('p');
     var name = document.createElement('span');
     var msg = document.createElement('span');
@@ -208,13 +218,13 @@ TestClient.prototype.applicationMessageHandler = function(message) {
 
   if (payload.hasOwnProperty('serverStatus')) {
     var statusEl = $('.serverStatus');
-    if (statusEl.length == 0 ){
+    if (statusEl.length === 0 ){
       statusEl = $('<div class="serverStatus" />');
       $('body').append(statusEl);
     }
 
-    var element = document.createElement('div');
-    var status = payload['serverStatus'];
+    element = document.createElement('div');
+    var status = payload.serverStatus;
     for (var key in status){
       var header = document.createElement('h2');
       header.innerText = key;
@@ -224,7 +234,7 @@ TestClient.prototype.applicationMessageHandler = function(message) {
       var section = status[key];
       for (var stat in section){
         var statName = document.createElement('dt');
-        statName.innerText = stat
+        statName.innerText = stat;
         table.appendChild(statName);
         var statContent = document.createElement('dd');
         statContent.innerText = section[stat];
@@ -256,4 +266,4 @@ TestClient.prototype.roomMessageHandler = function(message) {
 };
 
 module.exports = TestClient;
-var testClient = new TestClient();
+var testClient = new TestClient(); // jslint ignore:line

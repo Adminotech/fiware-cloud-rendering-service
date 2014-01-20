@@ -5,7 +5,7 @@ function PeerConnection(client, servers) {
   this.client = client;
   this.servers = servers || null;
   this.videoElement = null;
-  this.datachannel = false;
+  this.channel = false;
 }
 
 PeerConnection.prototype.initiatePeerConnection = function() {
@@ -68,7 +68,6 @@ PeerConnection.prototype.createStream = function() {
     function(error) {
       console.log('navigator.getUserMedia error: ', error);
     });
-
 };
 
 PeerConnection.prototype.gotStream = function(stream) {

@@ -1,6 +1,5 @@
 'use strict';
-var __ = require('underscore');
-var $ = require('jquery-browserify');
+var __ = require('underscore'), $ = require('jquery-browserify');
 
 function ControlsHandler(elementSelector, cb, options) {
   var defaults = {
@@ -10,7 +9,8 @@ function ControlsHandler(elementSelector, cb, options) {
   };
   options = __(defaults).extend(options ||  {});
 
-  this.cb = false;
+  this.cb = cb;
+  this.send.bind( this );
 
   this.selector = elementSelector;
   this.el = false;
@@ -23,7 +23,7 @@ function ControlsHandler(elementSelector, cb, options) {
     }
 
     if (options.keyboard) {
-      that.keyHandler = new KeyboardHandler(that.el, that.send);
+      that.keyHandler = new KeyboardHandler(that.el, that.send.bind(that));
     }
     if (options.mouse) {
       // Initiate mouse event handler
@@ -36,21 +36,22 @@ function ControlsHandler(elementSelector, cb, options) {
 
   });
 
-};
+}
 
 ControlsHandler.prototype.setCallback = function( cb ){
   this.cb = cb;
 };
 
-ControlsHandler.prototype.send = function(message) {
+ControlsHandler.prototype.send = function( message ) {
   if (this.cb){
-    this.cb(message);
+    console.log('Sending event');
+    this.cb( message );
   } else {
     console.log('CB not set', message);
   }
 };
 
-function KeyboardHandler(element, cb) {
+function KeyboardHandler(element, cb) { // jshint ignore:line
   this.send = cb;
   this.el = element;
   this.focus = false;
@@ -63,31 +64,37 @@ function KeyboardHandler(element, cb) {
 }
 
 KeyboardHandler.prototype.keyDown = function(e){
+  var key = e.keyCode ? e.keyCode : e.which;
+
+  //Add key to the list of all pressed keys
+  var index = this.keys.indexOf(key);
+  if (index === -1){
+    this.keys.push(key);
+  }
+
   var ev = this.createKeyEvent( e, 'keyDown' );
   if (!ev){
     return;
   }
 
-  var index = this.keys.indexOf(ev.key);
-  if (index === -1){
-    this.keys.push(ev.key);
-  }
-
-  this.send( JSON.stringify(ev) );
+  this.send( ev );
 };
 
 KeyboardHandler.prototype.keyUp = function(e){
+  var key = e.keyCode ? e.keyCode : e.which;
+
+  var index = this.keys.indexOf(key);
+  if (index > -1){
+    this.keys.splice(index, 1);
+  }
+
+  //Remove key from the list of all pressed keys
   var ev = this.createKeyEvent( e, 'keyUp' );
   if (!ev){
     return;
   }
 
-  var index = this.keys.indexOf(ev.key);
-  if (index > -1){
-    this.keys.splice(index, 1);
-  }
-
-  this.send( JSON.stringify(ev) );
+  this.send( ev );
 };
 
 KeyboardHandler.prototype.createKeyEvent = function(e, type){
@@ -96,7 +103,6 @@ KeyboardHandler.prototype.createKeyEvent = function(e, type){
   }
 
   var key = e.keyCode ? e.keyCode : e.which;
-  console.log(e);
 
   //PreventDefault from tab, space and backspace
   var isTabSpaceOrBackspace = [8, 9, 32].indexOf(key) > -1;
@@ -106,19 +112,21 @@ KeyboardHandler.prototype.createKeyEvent = function(e, type){
   }
 
   return {
-    type        : type,
-    key         : key,
-    otherKeys   : this.keys,
-    metaKey     : e.metaKey,
-    altKey      : e.altKey,
-    shiftKey    : e.shiftKey,
-    ctrlKey     : e.ctrlKey,
-    altGraphKey : e.altGraphKey
-  };
+      type: 'InputKeyboard',
+      action: type,
+      key: '123123',//key,
+      otherKeys: this.keys,
+      metaKey: e.metaKey,
+      altKey: e.altKey,
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altGraphKey: e.altGraphKey
+    };
 };
 
 KeyboardHandler.prototype.setKeyboardContext = function(event) {
-  if (event.target !== this.el) {
+  var thisOrChild = this.el == event.target || $(this.el).has(event.target).length > 0;
+  if ( !thisOrChild ) {
     this.focus = false;
     return false;
   }
@@ -127,8 +135,9 @@ KeyboardHandler.prototype.setKeyboardContext = function(event) {
   this.focus = true;
 };
 
-function MouseHandler(element) {
+// jshint ignore:start
+function MouseHandler() {
 
 }
-
+// jshint ignore:end
 module.exports = ControlsHandler;
