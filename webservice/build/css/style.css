@@ -1,13 +1,8 @@
 body {
-  padding: 50px 100px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 a {
   color: #00b7ff;
-}
-.video {
-  padding: 20px;
-  border: 1px solid red;
 }
 .controls {
   padding: 20px;
