@@ -56,7 +56,6 @@ TestClient.prototype.RTCsend = function( data ){
   if ( this.peerConnection.channel ) {
     var message = new Message( 'Application', 'PeerCustomMessage');
     message.setData( { payload: data } );
-    console.log( message.toString() );
     this.peerConnection.channel.send( message.toJSON() );
   }
 };
