@@ -111,12 +111,12 @@ Room.prototype.addClient = function( message, client ){
 };
 
 Room.prototype.removeClient = function( client ){
-    this.distributeMessage( new Message('Room', 'RoomUserLeft', { peerIds: [ peerId ] }) );
-
     var peerId = client.peerId;
 
     var index = this.clients.indexOf( client );
     this.clients.splice(index, 1);
+
+    this.distributeMessage( new Message('Room', 'RoomUserLeft', { peerIds: [ peerId ] }) );
 
     return true;
 };
