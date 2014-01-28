@@ -1,6 +1,5 @@
 'use strict';
-var uuid = require('node-uuid'),
-  Message = require('./CRMessage');
+var uuid = require('node-uuid');
 
 function Renderer(connection, pool) {
   this.id = uuid.v4();
