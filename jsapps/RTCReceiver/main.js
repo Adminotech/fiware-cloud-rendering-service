@@ -4,11 +4,11 @@ var WebSocket = require('ws'),
   $ = require('jquery-browserify'),
   Message = require('../../signalingserver/lib/CRMessage'),
   loremIpsum = require('lorem-ipsum'),
-  PeerConnectionHandler = require('./PeerConnection'),
-  ControlsHandler = require('./ControlsHandler'),
+  PeerConnectionHandler = require('../lib/PeerConnection'),
+  ControlsHandler = require('../lib/ControlsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
-function TestClient(options ) {
+function Client(options ) {
 
   this.defaults = {
     host: 'ws://' + window.location.host
@@ -22,9 +22,6 @@ function TestClient(options ) {
   this.controlsHandler = new ControlsHandler('.video', this.RTCsend.bind( this ));
 
   this.options = options ||  this.defaults;
-
-  window.g = this;
-  window.M = Message;
 
   this.nick = loremIpsum({
     count: 1,
@@ -45,14 +42,14 @@ function TestClient(options ) {
     ]
   };
 
-  this.peerConnection = new PeerConnectionHandler(this.socket, servers);
+  this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 
   if (argv.talk) {
     this.autoTalk();
   }
 }
 
-TestClient.prototype.RTCsend = function( data ){
+Client.prototype.RTCsend = function( data ){
   if ( this.peerConnection.channel ) {
     var message = new Message( 'Application', 'PeerCustomMessage');
     message.setData( { payload: data } );
@@ -60,7 +57,7 @@ TestClient.prototype.RTCsend = function( data ){
   }
 };
 
-TestClient.prototype.domShit = function() {
+Client.prototype.domInit = function() {
   var that = this;
   document.querySelector('.yournick').onblur = function(event) {
     that.nick = event.target.value;
@@ -84,7 +81,7 @@ TestClient.prototype.domShit = function() {
   }, false);
 };
 
-TestClient.prototype.autoTalk = function() {
+Client.prototype.autoTalk = function() {
   var that = this;
   setInterval(function() {
     var lorem = loremIpsum({
@@ -101,7 +98,7 @@ TestClient.prototype.autoTalk = function() {
   }, 4000);
 };
 
-TestClient.prototype.onopen = function() {
+Client.prototype.onopen = function() {
   var data = {
     registrant: this.type
   };
@@ -116,7 +113,7 @@ TestClient.prototype.onopen = function() {
   this.socket.send(m.toJSON());
 
   if (this.type === 'client') {
-    this.domShit();
+    this.domInit();
     this.sendIntroduction();
   } else {
     this.peerConnection.startRendererPeerConnection();
@@ -124,7 +121,7 @@ TestClient.prototype.onopen = function() {
 
 };
 
-TestClient.prototype.sendIntroduction = function(peerId) {
+Client.prototype.sendIntroduction = function(peerId) {
   var message = new Message('Application', 'RoomCustomMessage', {
     payload: {
       introduction: {
@@ -138,16 +135,16 @@ TestClient.prototype.sendIntroduction = function(peerId) {
   this.send(message.toJSON());
 };
 
-TestClient.prototype.sendMessage = function(message) {
+Client.prototype.sendMessage = function(message) {
   console.log('sending: ', message.toString());
   this.send(message.toJSON());
 };
 
-TestClient.prototype.send = function(string) {
+Client.prototype.send = function(string) {
   this.socket.send(string);
 };
 
-TestClient.prototype.onmessage = function(data) {
+Client.prototype.onmessage = function(data) {
   var message = new Message().parse(data.data);
   if (!message) {
     console.log('MessageParsingError');
@@ -171,10 +168,10 @@ TestClient.prototype.onmessage = function(data) {
   }
 };
 
-TestClient.prototype.onclose = function() {};
+Client.prototype.onclose = function() {};
 
-TestClient.prototype.signalingMessageHandler = function(message) {
-  console.log(message.toString());
+Client.prototype.signalingMessageHandler = function(message) {
+  console.log('Got', message.toString());
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }
@@ -188,7 +185,7 @@ TestClient.prototype.signalingMessageHandler = function(message) {
   console.log(message);
 };
 
-TestClient.prototype.applicationMessageHandler = function(message) {
+Client.prototype.applicationMessageHandler = function(message) {
   var payload = message.getDataProp('payload'), element;
 
   if (payload.hasOwnProperty('message')) {
@@ -247,7 +244,7 @@ TestClient.prototype.applicationMessageHandler = function(message) {
 
 };
 
-TestClient.prototype.roomMessageHandler = function(message) {
+Client.prototype.roomMessageHandler = function(message) {
   if (message.getType() === 'RoomAssigned') {
     if (message.getDataProp('error') === 0) {
       this.peerId = message.getDataProp('peerId');
@@ -264,5 +261,5 @@ TestClient.prototype.roomMessageHandler = function(message) {
   console.log(message.toString());
 };
 
-module.exports = TestClient;
-var testClient = new TestClient(); // jslint ignore:line
+module.exports = Client;
+var client = new Client(); // jslint ignore:line

@@ -20,7 +20,28 @@ a {
 }
 
 .requires {
-    text-decoration: italic;
-    margin: 5px;
-    font-size: 10px;
+  text-decoration: italic;
+  margin: 5px;
+  font-size: 10px;
+}
+
+.videoInstance {
+  width: 40%;
+  float: left;
+  margin: 10px;
+  border: 1px solid black;
+}
+
+video { width: 100%; }
+
+.videos:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.messages {
+  height: 200px;
+  overflow: scroll;
 }

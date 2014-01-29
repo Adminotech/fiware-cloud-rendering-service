@@ -65,13 +65,19 @@ function MouseHandler(element, cb) { // jshint ignore:line
   this.el = element;
   this.buttons = [false, false, false, false];
 
+  $(this.el).mousedown( this.mousedown.bind(this) );
+  $(this.el).dblclick( this.dblclick.bind(this) );
+  $(document).mouseup( this.mouseup.bind(this) );
+
+  this.setUnits();
+  $(window).resize( this.setUnits.bind(this) );
+};
+
+MouseHandler.prototype.setUnits = function(){
   this.offset = $(this.el).offset();
   this.height = $(this.el).height();
   this.width = $(this.el).width();
-
-  $(this.el).mousedown( this.mousedown.bind(this) );
-  $(document).mouseup( this.mouseup.bind(this) );
-}
+};
 
 MouseHandler.prototype.mousedown = function( event ) {
   console.log('Button', event.which, event.button, event);
@@ -84,12 +90,16 @@ MouseHandler.prototype.mousedown = function( event ) {
 MouseHandler.prototype.mouseup = function( event ) {
   this.buttons[ event.which ] = false;
 
+  this.send( this.buildMessage( 'release', event ) );
+
   //Unbind move binding if no buttons are pressed;
   if ( this.buttons.indexOf( true ) === -1 ) {
     $(this.el).unbind('mousemove');
   }
+};
 
-  this.send( this.buildMessage( 'release', event ) );
+MouseHandler.prototype.dblclick = function( event ) {
+  this.send( this.buildMessage( 'doublepress', event ) );
 };
 
 MouseHandler.prototype.mousemove = function( event ) {

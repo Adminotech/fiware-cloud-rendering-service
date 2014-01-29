@@ -13,7 +13,7 @@ module.exports = function(grunt) {
     },
     watch: {
       scripts: {
-        files: ['RTC*/**/*.js'],
+        files: ['RTC*/**/*.js', 'lib/*.js'],
         tasks: ['browserify'],
         options: {
           spawn: false,
