@@ -42,7 +42,7 @@ function Client(options ) {
     ]
   };
 
-  this.peerConnection = new PeerConnectionHandler(this.socket, servers);
+  this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 
   if (argv.talk) {
     this.autoTalk();
@@ -171,7 +171,7 @@ Client.prototype.onmessage = function(data) {
 Client.prototype.onclose = function() {};
 
 Client.prototype.signalingMessageHandler = function(message) {
-  console.log(message.toString());
+  console.log('Got', message.toString());
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }

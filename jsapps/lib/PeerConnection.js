@@ -1,15 +1,18 @@
 'use strict';
 var Message = require('../../signalingserver/lib/CRMessage');
 
-function PeerConnection(client, servers) {
+function PeerConnection(client, servers, parent) {
+  this.parent = parent;
   this.client = client;
   this.servers = servers || null;
   this.videoElement = null;
   this.channel = false;
+  this.icebuffer = [];
 }
 
 PeerConnection.prototype.initiatePeerConnection = function() {
-  this.pc = new webkitRTCPeerConnection(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onaddstream = this.initiateVideoElement.bind(this);
@@ -20,7 +23,8 @@ PeerConnection.prototype.initiatePeerConnection = function() {
 };
 
 PeerConnection.prototype.startRendererPeerConnection = function() {
-  this.pc = new webkitRTCPeerConnection(this.servers);
+  var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onstatechange = this.onStateChange.bind(this);
@@ -29,7 +33,6 @@ PeerConnection.prototype.startRendererPeerConnection = function() {
   this.pc.ondatachannel = this.onDataChannel.bind(this);
 
   this.createStream();
-  // this.createOffer();
 };
 
 PeerConnection.prototype.onDataChannel = function( event ){
@@ -95,6 +98,7 @@ PeerConnection.prototype.initiateVideoElement = function(event) {
 // };
 
 PeerConnection.prototype.onOffer = function(message) {
+  var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
   sdp = new RTCSessionDescription( data );
@@ -113,21 +117,21 @@ PeerConnection.prototype.onOffer = function(message) {
 PeerConnection.prototype.sendAnswer = function(description) {
   console.info('Sending answer', description);
   this.pc.setLocalDescription(description);
-  this.client.send(new Message('Signaling', 'Answer', {
+  this.parent.sendMessage(new Message('Signaling', 'Answer', {
     sdp: description
-  }).toJSON());
+  }));
 };
 
 PeerConnection.prototype.gotLocalDescription = function(description) {
   console.info('This is Sdp', description);
 
   this.pc.setLocalDescription(description);
-  this.client.send(new Message('Signaling', 'Offer', {
+  this.parent.sendMessage(new Message('Signaling', 'Offer', {
     sdp: {
       data: description.sdp,
       type: description.type
     }
-  }).toJSON());
+  }));
 };
 
 PeerConnection.prototype.onAnswer = function(message) {
@@ -149,6 +153,8 @@ PeerConnection.prototype.onAnswer = function(message) {
     var ice = ices[i];
     this.gotRemoteIceCandidate(ice);
   }
+
+  this.createStream();
 };
 
 PeerConnection.prototype.onIceCandidate = function(event) {
@@ -157,21 +163,35 @@ PeerConnection.prototype.onIceCandidate = function(event) {
       iceCandidates: [ event.candidate ]
     });
     console.log('This is ice', message.toString());
-    this.client.send(message.toJSON());
+    this.parent.sendMessage(message);
   }
 };
 
 PeerConnection.prototype.gotRemoteIceMessage = function(message) {
   console.log('icemessage', message.toString());
-  var ices = message.getDataProp('iceCandidates');
+  this.icebuffer = message.getDataProp('iceCandidates');
+
+  window.p = this.pc;
+
+  var ices = this.icebuffer;
   for (var i = 0; i < ices.length; i++) {
     var ice = ices[i];
+    this.gotRemoteIceCandidate(ice);
+  }
+
+};
+
+PeerConnection.prototype.addRemoteIce = function(){
+  var ices = this.icebuffer;
+  for (var i = 0; i < ices.length; i++) {
     this.gotRemoteIceCandidate(ice);
   }
 };
 
 PeerConnection.prototype.gotRemoteIceCandidate = function(candidate) {
-  this.pc.addIceCandidate(new RTCIceCandidate( candidate ));
+  candidate = JSON.parse( JSON.stringify( candidate ));
+  var c = new RTCIceCandidate( candidate );
+  this.pc.addIceCandidate( c );
 };
 
 module.exports = PeerConnection;

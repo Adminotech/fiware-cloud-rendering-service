@@ -8,24 +8,17 @@ var WebSocket = require('ws'),
   ControlsHandler = require('../lib/ControlsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
-function Renderer(options ) {
+function Renderer( options ) {
 
   this.defaults = {
     host: 'ws://' + window.location.host
   };
 
   this.type = 'renderer';
-
-  this.controlsHandler = new ControlsHandler('.video', this.RTCsend.bind( this ));
-
   this.options = options ||  this.defaults;
 
-  this.nick = loremIpsum({
-    count: 1,
-    units: 'words'
-  });
+  this.peerId = false;
 
-  this.clientList = {};
   this.socket = new WebSocket(this.options.host);
 
   this.socket.onopen = this.onopen.bind(this);
@@ -39,11 +32,7 @@ function Renderer(options ) {
     ]
   };
 
-  this.peerConnection = new PeerConnectionHandler(this.socket, servers);
-
-  if (argv.talk) {
-    this.autoTalk();
-  }
+  this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 }
 
 Renderer.prototype.RTCsend = function( data ){
@@ -54,86 +43,23 @@ Renderer.prototype.RTCsend = function( data ){
   }
 };
 
-Renderer.prototype.domShit = function() {
-  var that = this;
-  document.querySelector('.yournick').onblur = function(event) {
-    that.nick = event.target.value;
-    that.sendIntroduction();
-  };
-  document.querySelector('.yourmessage').addEventListener('keydown', function(e) {
-    if (!e) {
-      e = window.event;
-    }
-
-    // Enter is pressed
-    if (e.keyCode === 13) {
-      var msg = this.value;
-      this.value = '';
-      that.sendMessage(new Message('Application', 'RoomCustomMessage', {
-        payload: {
-          message: msg
-        }
-      }));
-    }
-  }, false);
-};
-
-Renderer.prototype.autoTalk = function() {
-  var that = this;
-  setInterval(function() {
-    var lorem = loremIpsum({
-      count: 1,
-      units: 'sentences',
-      sentenceLowerBound: 2,
-      sentenceUpperBound: 7
-    });
-    that.sendMessage(new Message('Application', 'RoomCustomMessage', {
-      payload: {
-        message: lorem
-      }
-    }));
-  }, 4000);
-};
-
 Renderer.prototype.onopen = function() {
   var data = {
     registrant: this.type
   };
-  if (argv.room) {
-    data.roomId = argv.room;
-  }
-
-  console.log('parameters', data);
 
   var m = new Message('State', 'Registration', data);
   console.log('Sending Registration');
   this.socket.send(m.toJSON());
-
-  if (this.type === 'client') {
-    this.domShit();
-    this.sendIntroduction();
-  } else {
-    this.peerConnection.startRendererPeerConnection();
-  }
-
-};
-
-Renderer.prototype.sendIntroduction = function(peerId) {
-  var message = new Message('Application', 'RoomCustomMessage', {
-    payload: {
-      introduction: {
-        nick: this.nick
-      }
-    }
-  });
-  if (peerId !== undefined) {
-    message.setDataProp('peerIds', [peerId]);
-  }
-  this.send(message.toJSON());
 };
 
 Renderer.prototype.sendMessage = function(message) {
   console.log('sending: ', message.toString());
+  var peerMessages = ['Offer', 'Answer', 'IceCandidates'];
+  if ( peerMessages.indexOf( message.getType() ) > -1 && this.peerId ){
+    console.log('SETTING PEER ID', this.peerId);
+    message.setDataProp('receiverId', this.peerId);
+  }
   this.send(message.toJSON());
 };
 
@@ -147,9 +73,9 @@ Renderer.prototype.onmessage = function(data) {
     console.log('MessageParsingError');
     return false;
   }
+
   switch (message.getChannel()) {
     case 'State':
-      console.log('Got: ', message.toString());
       break;
     case 'Room':
       this.roomMessageHandler(message);
@@ -168,7 +94,7 @@ Renderer.prototype.onmessage = function(data) {
 Renderer.prototype.onclose = function() {};
 
 Renderer.prototype.signalingMessageHandler = function(message) {
-  console.log(message.toString());
+  console.log('Got', message.toString());
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }
@@ -178,70 +104,34 @@ Renderer.prototype.signalingMessageHandler = function(message) {
   if (message.getType() === 'Offer') {
     this.peerConnection.onOffer(message);
   }
-
-  console.log(message);
 };
 
 Renderer.prototype.applicationMessageHandler = function(message) {
   var payload = message.getDataProp('payload'), element;
 
   if (payload.hasOwnProperty('message')) {
-    element = document.querySelector('.messages');
-    var container = document.createElement('p');
-    var name = document.createElement('span');
-    var msg = document.createElement('span');
-    var sender = payload.senderId;
-    if (this.clientList.hasOwnProperty(sender)) {
-      sender = this.clientList[sender];
-    }
-    name.innerHTML = sender + ': ';
-    msg.innerHTML = payload.message;
-    container.appendChild(name);
-    container.appendChild(msg);
-    element.appendChild(container);
-    element.scrollTop = element.scrollHeight;
+    //Do nothing
   }
 
   if (payload.hasOwnProperty('introduction') && payload.hasOwnProperty('senderId')) {
-    if (!this.clientList.hasOwnProperty(payload.senderId)) {
-      this.sendIntroduction(payload.senderId);
-    }
-    this.clientList[payload.senderId] = payload.introduction.nick;
+    //Do nothing
   }
 
   if (payload.hasOwnProperty('serverStatus')) {
-    var statusEl = $('.serverStatus');
-    if (statusEl.length === 0 ){
-      statusEl = $('<div class="serverStatus" />');
-      $('body').append(statusEl);
-    }
-
-    element = document.createElement('div');
-    var status = payload.serverStatus;
-    for (var key in status){
-      var header = document.createElement('h2');
-      header.innerText = key;
-      element.appendChild(header);
-
-      var table = document.createElement('dl');
-      var section = status[key];
-      for (var stat in section){
-        var statName = document.createElement('dt');
-        statName.innerText = stat;
-        table.appendChild(statName);
-        var statContent = document.createElement('dd');
-        statContent.innerText = section[stat];
-        table.appendChild(statContent);
-      }
-      element.appendChild(table);
-    }
-
-    statusEl.html( element );
+    //Do nothing
   }
 
 };
 
 Renderer.prototype.roomMessageHandler = function(message) {
+  if (message.getType() === 'RoomUserJoined') {
+    var ids = message.getDataProp('peerIds');
+    if (ids.length > 0 && this.peerId == false){
+      this.peerId = ids[0];
+      console.log('this.peerId', this.peerId);
+      this.peerConnection.startRendererPeerConnection();
+    }
+  }
   if (message.getType() === 'RoomAssigned') {
     if (message.getDataProp('error') === 0) {
       this.peerId = message.getDataProp('peerId');
