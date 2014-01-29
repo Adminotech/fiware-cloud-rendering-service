@@ -14,10 +14,7 @@ function Renderer(options ) {
     host: 'ws://' + window.location.host
   };
 
-  this.type = 'client';
-  if (argv.renderer) {
-    this.type = 'renderer';
-  }
+  this.type = 'renderer';
 
   this.controlsHandler = new ControlsHandler('.video', this.RTCsend.bind( this ));
 
@@ -262,4 +259,4 @@ Renderer.prototype.roomMessageHandler = function(message) {
 };
 
 module.exports = Renderer;
-var Renderer = new Renderer(); // jslint ignore:line
+var renderer = new Renderer(); // jslint ignore:line
