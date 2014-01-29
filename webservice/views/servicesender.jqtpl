@@ -3,7 +3,7 @@
   <head>
     <title>${title}</title>
     <link rel="stylesheet" type="text/css" href="/css/style.css">
-    <script type="text/javascript" src="/js/builds/RTCReceiver.js"></script>
+    <script type="text/javascript" src="/js/builds/RTCSender.js"></script>
   </head>
   <body>
 <h1>RTC Test Renderer</h1>
