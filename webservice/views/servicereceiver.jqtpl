@@ -6,21 +6,6 @@
     <script type="text/javascript" src="/js/builds/RTCReceiver.js"></script>
   </head>
   <body>
-<style>
-    .videoInstance { width: 40%; float: left; margin: 10px; border: 1px solid black; }
-    video { width: 100%; }
-    .videos:after {
-        content: ".";
-        display: block;
-        height: 0;
-        clear: both;
-        visibility: hidden;
-    }
-    .messages {
-        height: 200px;
-        overflow: scroll;
-    }
-</style>
 <h1>RTC Connection Test</h1>
 <div class="video"></div>
 <div class="chat">
