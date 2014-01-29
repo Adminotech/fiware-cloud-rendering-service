@@ -65,14 +65,19 @@ function MouseHandler(element, cb) { // jshint ignore:line
   this.el = element;
   this.buttons = [false, false, false, false];
 
-  this.offset = $(this.el).offset();
-  this.height = $(this.el).height();
-  this.width = $(this.el).width();
-
   $(this.el).mousedown( this.mousedown.bind(this) );
   $(this.el).dblclick( this.dblclick.bind(this) );
   $(document).mouseup( this.mouseup.bind(this) );
-}
+
+  this.setUnits();
+  $(window).resize( this.setUnits.bind(this) );
+};
+
+MouseHandler.prototype.setUnits = function(){
+  this.offset = $(this.el).offset();
+  this.height = $(this.el).height();
+  this.width = $(this.el).width();
+};
 
 MouseHandler.prototype.mousedown = function( event ) {
   console.log('Button', event.which, event.button, event);
