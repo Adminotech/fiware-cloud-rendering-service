@@ -168,12 +168,15 @@ Room.prototype.broadcast = function(message, client) {
     this.clients[i].send(message.toJSON());
   }
 };
+
 Room.prototype.isAuthenticated = function(message, client) {
   this.authHandler.isAuthenticated(message, client);
 };
+
 Room.prototype.isAuthorized = function(message, client) {
   this.authHandler.isAuthorized(message, client);
 };
+
 Room.prototype.authHandler = {
   isAuthenticated: function() {
     return true;
@@ -182,6 +185,7 @@ Room.prototype.authHandler = {
     return true;
   }
 };
+
 Room.prototype.purge = function() {
   this.pool = false;
   this.clients = false;
@@ -190,6 +194,7 @@ Room.prototype.purge = function() {
   clearInterval(this.statusInterval);
 
 };
+
 Room.prototype.isActive = function() {
   return (this.clients.length > 0);
 };
