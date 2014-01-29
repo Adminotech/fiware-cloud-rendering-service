@@ -9,24 +9,17 @@ var WebSocket = require('ws'),
   ControlsHandler = require('../lib/ControlsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
-function Renderer(options ) {
+function Renderer( options ) {
 
   this.defaults = {
     host: 'ws://' + window.location.host
   };
 
   this.type = 'renderer';
-
-  this.controlsHandler = new ControlsHandler('.video', this.RTCsend.bind( this ));
-
   this.options = options ||  this.defaults;
 
-  this.nick = loremIpsum({
-    count: 1,
-    units: 'words'
-  });
+  this.peerId = false;
 
-  this.clientList = {};
   this.socket = new WebSocket(this.options.host);
 
   this.socket.onopen = this.onopen.bind(this);
@@ -40,11 +33,7 @@ function Renderer(options ) {
     ]
   };
 
-  this.peerConnection = new PeerConnectionHandler(this.socket, servers);
-
-  if (argv.talk) {
-    this.autoTalk();
-  }
+  this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 }
 
 Renderer.prototype.RTCsend = function( data ){
@@ -55,86 +44,23 @@ Renderer.prototype.RTCsend = function( data ){
   }
 };
 
-Renderer.prototype.domShit = function() {
-  var that = this;
-  document.querySelector('.yournick').onblur = function(event) {
-    that.nick = event.target.value;
-    that.sendIntroduction();
-  };
-  document.querySelector('.yourmessage').addEventListener('keydown', function(e) {
-    if (!e) {
-      e = window.event;
-    }
-
-    // Enter is pressed
-    if (e.keyCode === 13) {
-      var msg = this.value;
-      this.value = '';
-      that.sendMessage(new Message('Application', 'RoomCustomMessage', {
-        payload: {
-          message: msg
-        }
-      }));
-    }
-  }, false);
-};
-
-Renderer.prototype.autoTalk = function() {
-  var that = this;
-  setInterval(function() {
-    var lorem = loremIpsum({
-      count: 1,
-      units: 'sentences',
-      sentenceLowerBound: 2,
-      sentenceUpperBound: 7
-    });
-    that.sendMessage(new Message('Application', 'RoomCustomMessage', {
-      payload: {
-        message: lorem
-      }
-    }));
-  }, 4000);
-};
-
 Renderer.prototype.onopen = function() {
   var data = {
     registrant: this.type
   };
-  if (argv.room) {
-    data.roomId = argv.room;
-  }
-
-  console.log('parameters', data);
 
   var m = new Message('State', 'Registration', data);
   console.log('Sending Registration');
   this.socket.send(m.toJSON());
-
-  if (this.type === 'client') {
-    this.domShit();
-    this.sendIntroduction();
-  } else {
-    this.peerConnection.startRendererPeerConnection();
-  }
-
-};
-
-Renderer.prototype.sendIntroduction = function(peerId) {
-  var message = new Message('Application', 'RoomCustomMessage', {
-    payload: {
-      introduction: {
-        nick: this.nick
-      }
-    }
-  });
-  if (peerId !== undefined) {
-    message.setDataProp('peerIds', [peerId]);
-  }
-  this.send(message.toJSON());
 };
 
 Renderer.prototype.sendMessage = function(message) {
   console.log('sending: ', message.toString());
+  var peerMessages = ['Offer', 'Answer', 'IceCandidates'];
+  if ( peerMessages.indexOf( message.getType() ) > -1 && this.peerId ){
+    console.log('SETTING PEER ID', this.peerId);
+    message.setDataProp('receiverId', this.peerId);
+  }
   this.send(message.toJSON());
 };
 
@@ -148,9 +74,9 @@ Renderer.prototype.onmessage = function(data) {
     console.log('MessageParsingError');
     return false;
   }
+
   switch (message.getChannel()) {
     case 'State':
-      console.log('Got: ', message.toString());
       break;
     case 'Room':
       this.roomMessageHandler(message);
@@ -169,7 +95,7 @@ Renderer.prototype.onmessage = function(data) {
 Renderer.prototype.onclose = function() {};
 
 Renderer.prototype.signalingMessageHandler = function(message) {
-  console.log(message.toString());
+  console.log('Got', message.toString());
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }
@@ -179,70 +105,34 @@ Renderer.prototype.signalingMessageHandler = function(message) {
   if (message.getType() === 'Offer') {
     this.peerConnection.onOffer(message);
   }
-
-  console.log(message);
 };
 
 Renderer.prototype.applicationMessageHandler = function(message) {
   var payload = message.getDataProp('payload'), element;
 
   if (payload.hasOwnProperty('message')) {
-    element = document.querySelector('.messages');
-    var container = document.createElement('p');
-    var name = document.createElement('span');
-    var msg = document.createElement('span');
-    var sender = payload.senderId;
-    if (this.clientList.hasOwnProperty(sender)) {
-      sender = this.clientList[sender];
-    }
-    name.innerHTML = sender + ': ';
-    msg.innerHTML = payload.message;
-    container.appendChild(name);
-    container.appendChild(msg);
-    element.appendChild(container);
-    element.scrollTop = element.scrollHeight;
+    //Do nothing
   }
 
   if (payload.hasOwnProperty('introduction') && payload.hasOwnProperty('senderId')) {
-    if (!this.clientList.hasOwnProperty(payload.senderId)) {
-      this.sendIntroduction(payload.senderId);
-    }
-    this.clientList[payload.senderId] = payload.introduction.nick;
+    //Do nothing
   }
 
   if (payload.hasOwnProperty('serverStatus')) {
-    var statusEl = $('.serverStatus');
-    if (statusEl.length === 0 ){
-      statusEl = $('<div class="serverStatus" />');
-      $('body').append(statusEl);
-    }
-
-    element = document.createElement('div');
-    var status = payload.serverStatus;
-    for (var key in status){
-      var header = document.createElement('h2');
-      header.innerText = key;
-      element.appendChild(header);
-
-      var table = document.createElement('dl');
-      var section = status[key];
-      for (var stat in section){
-        var statName = document.createElement('dt');
-        statName.innerText = stat;
-        table.appendChild(statName);
-        var statContent = document.createElement('dd');
-        statContent.innerText = section[stat];
-        table.appendChild(statContent);
-      }
-      element.appendChild(table);
-    }
-
-    statusEl.html( element );
+    //Do nothing
   }
 
 };
 
 Renderer.prototype.roomMessageHandler = function(message) {
+  if (message.getType() === 'RoomUserJoined') {
+    var ids = message.getDataProp('peerIds');
+    if (ids.length > 0 && this.peerId == false){
+      this.peerId = ids[0];
+      console.log('this.peerId', this.peerId);
+      this.peerConnection.startRendererPeerConnection();
+    }
+  }
   if (message.getType() === 'RoomAssigned') {
     if (message.getDataProp('error') === 0) {
       this.peerId = message.getDataProp('peerId');
@@ -330,14 +220,19 @@ function MouseHandler(element, cb) { // jshint ignore:line
   this.el = element;
   this.buttons = [false, false, false, false];
 
-  this.offset = $(this.el).offset();
-  this.height = $(this.el).height();
-  this.width = $(this.el).width();
-
   $(this.el).mousedown( this.mousedown.bind(this) );
   $(this.el).dblclick( this.dblclick.bind(this) );
   $(document).mouseup( this.mouseup.bind(this) );
-}
+
+  this.setUnits();
+  $(window).resize( this.setUnits.bind(this) );
+};
+
+MouseHandler.prototype.setUnits = function(){
+  this.offset = $(this.el).offset();
+  this.height = $(this.el).height();
+  this.width = $(this.el).width();
+};
 
 MouseHandler.prototype.mousedown = function( event ) {
   console.log('Button', event.which, event.button, event);
@@ -477,15 +372,18 @@ module.exports = ControlsHandler;
 'use strict';
 var Message = require('../../signalingserver/lib/CRMessage');
 
-function PeerConnection(client, servers) {
+function PeerConnection(client, servers, parent) {
+  this.parent = parent;
   this.client = client;
   this.servers = servers || null;
   this.videoElement = null;
   this.channel = false;
+  this.icebuffer = [];
 }
 
 PeerConnection.prototype.initiatePeerConnection = function() {
-  this.pc = new webkitRTCPeerConnection(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onaddstream = this.initiateVideoElement.bind(this);
@@ -496,7 +394,8 @@ PeerConnection.prototype.initiatePeerConnection = function() {
 };
 
 PeerConnection.prototype.startRendererPeerConnection = function() {
-  this.pc = new webkitRTCPeerConnection(this.servers);
+  var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onstatechange = this.onStateChange.bind(this);
@@ -505,7 +404,6 @@ PeerConnection.prototype.startRendererPeerConnection = function() {
   this.pc.ondatachannel = this.onDataChannel.bind(this);
 
   this.createStream();
-  // this.createOffer();
 };
 
 PeerConnection.prototype.onDataChannel = function( event ){
@@ -571,6 +469,7 @@ PeerConnection.prototype.initiateVideoElement = function(event) {
 // };
 
 PeerConnection.prototype.onOffer = function(message) {
+  var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
   sdp = new RTCSessionDescription( data );
@@ -589,21 +488,21 @@ PeerConnection.prototype.onOffer = function(message) {
 PeerConnection.prototype.sendAnswer = function(description) {
   console.info('Sending answer', description);
   this.pc.setLocalDescription(description);
-  this.client.send(new Message('Signaling', 'Answer', {
+  this.parent.sendMessage(new Message('Signaling', 'Answer', {
     sdp: description
-  }).toJSON());
+  }));
 };
 
 PeerConnection.prototype.gotLocalDescription = function(description) {
   console.info('This is Sdp', description);
 
   this.pc.setLocalDescription(description);
-  this.client.send(new Message('Signaling', 'Offer', {
+  this.parent.sendMessage(new Message('Signaling', 'Offer', {
     sdp: {
       data: description.sdp,
       type: description.type
     }
-  }).toJSON());
+  }));
 };
 
 PeerConnection.prototype.onAnswer = function(message) {
@@ -625,6 +524,8 @@ PeerConnection.prototype.onAnswer = function(message) {
     var ice = ices[i];
     this.gotRemoteIceCandidate(ice);
   }
+
+  this.createStream();
 };
 
 PeerConnection.prototype.onIceCandidate = function(event) {
@@ -633,21 +534,35 @@ PeerConnection.prototype.onIceCandidate = function(event) {
       iceCandidates: [ event.candidate ]
     });
     console.log('This is ice', message.toString());
-    this.client.send(message.toJSON());
+    this.parent.sendMessage(message);
   }
 };
 
 PeerConnection.prototype.gotRemoteIceMessage = function(message) {
   console.log('icemessage', message.toString());
-  var ices = message.getDataProp('iceCandidates');
+  this.icebuffer = message.getDataProp('iceCandidates');
+
+  window.p = this.pc;
+
+  var ices = this.icebuffer;
   for (var i = 0; i < ices.length; i++) {
     var ice = ices[i];
+    this.gotRemoteIceCandidate(ice);
+  }
+
+};
+
+PeerConnection.prototype.addRemoteIce = function(){
+  var ices = this.icebuffer;
+  for (var i = 0; i < ices.length; i++) {
     this.gotRemoteIceCandidate(ice);
   }
 };
 
 PeerConnection.prototype.gotRemoteIceCandidate = function(candidate) {
-  this.pc.addIceCandidate(new RTCIceCandidate( candidate ));
+  candidate = JSON.parse( JSON.stringify( candidate ));
+  var c = new RTCIceCandidate( candidate );
+  this.pc.addIceCandidate( c );
 };
 
 module.exports = PeerConnection;
