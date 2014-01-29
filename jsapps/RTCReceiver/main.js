@@ -57,7 +57,7 @@ Client.prototype.RTCsend = function( data ){
   }
 };
 
-Client.prototype.domShit = function() {
+Client.prototype.domInit = function() {
   var that = this;
   document.querySelector('.yournick').onblur = function(event) {
     that.nick = event.target.value;
@@ -113,7 +113,7 @@ Client.prototype.onopen = function() {
   this.socket.send(m.toJSON());
 
   if (this.type === 'client') {
-    this.domShit();
+    this.domInit();
     this.sendIntroduction();
   } else {
     this.peerConnection.startRendererPeerConnection();
