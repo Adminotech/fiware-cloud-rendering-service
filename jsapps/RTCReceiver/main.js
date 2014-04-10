@@ -8,10 +8,15 @@ var WebSocket = require('ws'),
   ControlsHandler = require('../lib/ControlsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
-function Client(options ) {
+function Client(options) {
 
   this.defaults = {
-    host: 'ws://' + window.location.host
+    host : 'ws://' + window.location.host,
+    username : loremIpsum({ count: 1, units: 'words' }),
+    iceServers : [
+      { 'url': 'stun:stun.l.google.com:19302' },
+      { 'url': 'turn:130.206.83.161:3478' }
+    ]
   };
 
   this.type = 'client';
@@ -23,10 +28,7 @@ function Client(options ) {
 
   this.options = options ||  this.defaults;
 
-  this.nick = loremIpsum({
-    count: 1,
-    units: 'words'
-  });
+  this.nick = (options !== undefined && typeof options.username === "string" ? options.username : this.defaults.username);
 
   this.clientList = {};
   this.socket = new WebSocket(this.options.host);
@@ -35,12 +37,11 @@ function Client(options ) {
   this.socket.onmessage = this.onmessage.bind(this);
   this.socket.onclose = this.onclose.bind(this);
 
-  var servers = {
-    'iceServers': [
-      { 'url': 'stun:stun.l.google.com:19302' },
-      { 'url': 'turn:130.206.83.161:3478' }
-    ]
-  };
+  var servers = undefined;
+  if (options !== undefined && options.iceServers !== undefined)
+    servers = { iceServers : options.iceServers } ;
+  else
+    servers = { iceServers : this.defaults.iceServers };
 
   this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 
@@ -59,6 +60,8 @@ Client.prototype.RTCsend = function( data ){
 
 Client.prototype.domInit = function() {
   var that = this;
+  if (document.querySelector('.yournick') == null || document.querySelector('.yourmessage') == null)
+    return;
   document.querySelector('.yournick').onblur = function(event) {
     that.nick = event.target.value;
     that.sendIntroduction();
@@ -187,8 +190,9 @@ Client.prototype.signalingMessageHandler = function(message) {
 
 Client.prototype.applicationMessageHandler = function(message) {
   var payload = message.getDataProp('payload'), element;
-
   if (payload.hasOwnProperty('message')) {
+    if (document.querySelector('.messages') == null)
+      return;
     element = document.querySelector('.messages');
     var container = document.createElement('p');
     var name = document.createElement('span');
@@ -261,5 +265,13 @@ Client.prototype.roomMessageHandler = function(message) {
   console.log(message.toString());
 };
 
-module.exports = Client;
-var client = new Client(); // jslint ignore:line
+if (module !== undefined)
+  module.exports = Client;
+if (window !== undefined)
+{
+  window.CloudRenderingClient = Client;
+  window.CloudRenderingMessage = Message;
+  window.CloudRenderingPeerConnectionHandler = PeerConnectionHandler;
+}
+
+//var client = new Client(); // jslint ignore:line
