@@ -38,9 +38,14 @@ video {
 }
 #testsHolder {
   position: absolute;
-  top: 0;
-  right: 0;
+  padding: 6px;
+  padding-top: 0px;
+  top: 15px;
+  right: 15px;
   width: 300px;
+  background-color: white;
+  border: 1px solid gray;
+  border-radius: 8px;
 }
 .test-status {
   padding-right: 3px;
