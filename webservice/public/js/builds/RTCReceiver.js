@@ -703,7 +703,7 @@ var tests = require('./tests');
 var test;
 
 function Runner(test){
-	var runs = 0, maxRuns = 10;
+	var runs = 0, maxRuns = 10, pause = 2000;
 	var tests, category;
 	var runnerInterval;
 
@@ -793,7 +793,7 @@ function Runner(test){
 	}
 
 	initTests();
-	runnerInterval = setInterval( iterateTests, 2000);
+	runnerInterval = setInterval( iterateTests, pause);
 }
 
 function TestsHandler(scope){
@@ -831,9 +831,9 @@ function Test(scope) {
 	var test = {};
 	test.category = 'Signaling Server';
 	test.tests = [
-		{ name: 'Websocket connection', success: 'Established', test: function(){ return keyIsOfValue( scope, 'scope.socket.readyState', 1) } },
+		{ name: 'Signaling Messages', success: 'Coming in', test: function(){ return keyIsOfValue( scope, 'scope.signalingMessages', 1) } },
 		{ name: 'Application messages', success: 'Working', test: function(){ return keyIsOfValue( scope, 'scope.applicationMessages', 1) } },
-		{ name: 'Signaling Messages', success: 'Coming in', test: function(){ return keyIsOfValue( scope, 'scope.signalingMessages', 1) } }
+		{ name: 'Websocket connection', success: 'Established', test: function(){ return keyIsOfValue( scope, 'scope.socket.readyState', 1) } }
 	];
 	return test;
 }
@@ -857,11 +857,9 @@ function Test(scope) {
 	var test = {};
 	test.category = 'WebRTC';
 	test.tests = [
-		// { name: 'WebRTC connection', success: 'Established', test: function(scope){ return scope.hasOwnProperty('peerConnection') && scope.peerConnection.hasOwnProperty('pc')  } },
-		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } },
+		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } },
 		{ name: 'Video Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.videoStream', 1) } },
-		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } }
-
+		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } }
 	]
 	return test;
 }
@@ -874,7 +872,7 @@ function Test(scope) {
 	var test = {};
 	test.category = 'Webserver';
 	test.tests = [
-		{ name: 'Webserver assets', success: 'Loaded', test: function(scope){ return window.hasOwnProperty('CloudRenderingClient'); } }
+		{ name: 'Web Client assets', success: 'Loaded', test: function(scope){ return window.hasOwnProperty('CloudRenderingClient'); } }
 	]
 	return test;
 }

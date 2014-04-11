@@ -2,7 +2,7 @@ var tests = require('./tests');
 var test;
 
 function Runner(test){
-	var runs = 0, maxRuns = 10;
+	var runs = 0, maxRuns = 10, pause = 2000;
 	var tests, category;
 	var runnerInterval;
 
@@ -92,7 +92,7 @@ function Runner(test){
 	}
 
 	initTests();
-	runnerInterval = setInterval( iterateTests, 2000);
+	runnerInterval = setInterval( iterateTests, pause);
 }
 
 function TestsHandler(scope){
