@@ -859,7 +859,7 @@ function Test(scope) {
 	test.tests = [
 		// { name: 'WebRTC connection', success: 'Established', test: function(scope){ return scope.hasOwnProperty('peerConnection') && scope.peerConnection.hasOwnProperty('pc')  } },
 		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } },
-		{ name: 'Video Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } },
+		{ name: 'Video Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.videoStream', 1) } },
 		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } }
 
 	]
@@ -883,9 +883,9 @@ module.exports = Test;
 },{}],8:[function(require,module,exports){
 var tests = [];
 
-tests.push( require('./WebserverTest'));
-tests.push( require('./SignalingServerTest'));
 tests.push( require('./WebRTCTest'));
+tests.push( require('./SignalingServerTest'));
+tests.push( require('./WebserverTest'));
 
 module.exports = tests;
 },{"./SignalingServerTest":5,"./WebRTCTest":6,"./WebserverTest":7}],9:[function(require,module,exports){

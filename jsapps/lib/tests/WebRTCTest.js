@@ -15,11 +15,9 @@ function Test(scope) {
 	var test = {};
 	test.category = 'WebRTC';
 	test.tests = [
-		// { name: 'WebRTC connection', success: 'Established', test: function(scope){ return scope.hasOwnProperty('peerConnection') && scope.peerConnection.hasOwnProperty('pc')  } },
-		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } },
+		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } },
 		{ name: 'Video Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.videoStream', 1) } },
-		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } }
-
+		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } }
 	]
 	return test;
 }
