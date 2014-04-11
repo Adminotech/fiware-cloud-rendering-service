@@ -27,27 +27,23 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "signalingserver/lib/Renderer.js",
-			"settings":
-			{
-				"buffer_size": 2958,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 96.0,
+		"height": 118.0,
 		"selected_items":
 		[
 			[
-				"forma",
-				"Format: Javascript"
+				"mov",
+				"File: Move"
 			],
 			[
 				"form",
+				"Format: Javascript"
+			],
+			[
+				"forma",
 				"Format: Javascript"
 			],
 			[
@@ -188,13 +184,23 @@
 	},
 	"file_history":
 	[
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/webservice/views/servicesender.jqtpl",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/webservice/views/servicereceiver.jqtpl",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/RTCReceiver/main.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/Room.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/SignalingHandler.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/lib/ControlsHandler.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/lib/PeerConnection.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/RTCSender/main.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/Gruntfile.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/server.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/CRMessage.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/editor-settings.sublime-project",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/Renderer.js",
+		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/Client.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/RTCReceiver/ControlsHandler.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/RoomsPool.js",
-		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/Room.js",
-		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/RTCReceiver/main.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/jsapps/RTCReceiver/PeerConnection.js",
-		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/signalingserver/lib/CRMessage.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/webservice/node_modules/less-middleware/node_modules/less/test/browser/runner-browser-options.js",
 		"/Users/pasiaj/Sites/fiware-cloud-rendering-service/README.md",
 		"/Users/pasiaj/synergy.conf",
@@ -243,6 +249,7 @@
 		"height": 91.0,
 		"where_history":
 		[
+			""
 		]
 	},
 	"find_state":
@@ -250,6 +257,42 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"addRenderer",
+			"UserJoined",
+			"signali",
+			"onOffer",
+			"offer",
+			"addIceCandidate",
+			"gotRemote",
+			"client.sendMessage",
+			".send",
+			"offer",
+			"Offer",
+			"createOffer",
+			"Message",
+			"Offer",
+			"Wrong peerid",
+			"onopen",
+			"onOpen",
+			"sendIntroduction",
+			"This is Sdp",
+			"gotRemote",
+			"onAnsert",
+			"applicationMessa",
+			"createAns",
+			"createOffer",
+			"onAnswer",
+			"signaling",
+			"video",
+			"type",
+			"Purging ",
+			"Purging rooms",
+			"type",
+			"domShit",
+			"Client",
+			"domShit",
+			"TestClient",
+			"renderer",
 			"jee",
 			"cgscopy",
 			"console.log('Button",
@@ -307,6 +350,10 @@
 		"regex": true,
 		"replace_history":
 		[
+			"parent.sendMessage",
+			"domInit",
+			"Renderer",
+			"Client",
 			"buildMessage",
 			"$1 Yokinen",
 			"Jokinen",
@@ -337,145 +384,8 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "signalingserver/lib/Renderer.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2958,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								51,
-								51
-							]
-						],
-						"settings":
-						{
-							"bs_sintax": "javascript",
-							"buffer_scroll_name": "9e1e1b32",
-							"codeintel": true,
-							"codeintel_config":
-							{
-								"JavaScript":
-								{
-									"codeintel_max_recursive_dir_depth": 2,
-									"codeintel_scan_files_in_project": false,
-									"javascriptExtraPaths":
-									[
-									]
-								},
-								"PHP":
-								{
-									"codeintel_max_recursive_dir_depth": 5,
-									"codeintel_scan_files_in_project": false,
-									"phpExtraPaths":
-									[
-									]
-								},
-								"Python":
-								{
-									"env":
-									{
-									}
-								}
-							},
-							"codeintel_enabled_languages":
-							[
-								"JavaScript",
-								"Mason",
-								"XBL",
-								"XUL",
-								"RHTML",
-								"SCSS",
-								"Python",
-								"HTML",
-								"Ruby",
-								"Python3",
-								"XML",
-								"Sass",
-								"XSLT",
-								"Django",
-								"HTML5",
-								"Perl",
-								"CSS",
-								"Twig",
-								"Less",
-								"Smarty",
-								"Node.js",
-								"Tcl",
-								"TemplateToolkit",
-								"PHP"
-							],
-							"codeintel_live": true,
-							"codeintel_live_enabled_languages":
-							[
-								"JavaScript",
-								"Mason",
-								"XBL",
-								"XUL",
-								"RHTML",
-								"SCSS",
-								"Python",
-								"HTML",
-								"Ruby",
-								"Python3",
-								"XML",
-								"Sass",
-								"XSLT",
-								"Django",
-								"HTML5",
-								"Perl",
-								"CSS",
-								"Twig",
-								"Less",
-								"Smarty",
-								"Node.js",
-								"Tcl",
-								"TemplateToolkit",
-								"PHP"
-							],
-							"codeintel_max_recursive_dir_depth": 10,
-							"codeintel_scan_exclude_dir":
-							{
-								"JavaScript":
-								[
-									"/build/",
-									"/min/"
-								]
-							},
-							"codeintel_scan_files_in_project": true,
-							"codeintel_selected_catalogs":
-							[
-								"PyWin32",
-								"jQuery",
-								"Rails"
-							],
-							"codeintel_snippets": true,
-							"codeintel_syntax_map":
-							{
-								"Python Django": "Python"
-							},
-							"codeintel_tooltips": "popup",
-							"sublime_auto_complete": true,
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -526,15 +436,15 @@
 		"selected_items":
 		[
 			[
+				"crmess",
+				"signalingserver/lib/CRMessage.js"
+			],
+			[
 				"room",
 				"signalingserver/lib/Room.js"
 			],
 			[
 				"crmessage",
-				"signalingserver/lib/CRMessage.js"
-			],
-			[
-				"crmess",
 				"signalingserver/lib/CRMessage.js"
 			]
 		],

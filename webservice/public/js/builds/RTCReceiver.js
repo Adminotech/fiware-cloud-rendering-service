@@ -7,12 +7,18 @@ var WebSocket = require('ws'),
   loremIpsum = require('lorem-ipsum'),
   PeerConnectionHandler = require('../lib/PeerConnection'),
   ControlsHandler = require('../lib/ControlsHandler'),
+  TestsHandler = require('../lib/TestsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
-function Client(options ) {
+function Client(options) {
 
   this.defaults = {
-    host: 'ws://' + window.location.host
+    host : 'ws://' + window.location.host,
+    username : loremIpsum({ count: 1, units: 'words' }),
+    iceServers : [
+      { 'url': 'stun:stun.l.google.com:19302' },
+      { 'url': 'turn:130.206.83.161:3478' }
+    ]
   };
 
   this.type = 'client';
@@ -24,10 +30,7 @@ function Client(options ) {
 
   this.options = options ||  this.defaults;
 
-  this.nick = loremIpsum({
-    count: 1,
-    units: 'words'
-  });
+  this.nick = (options !== undefined && typeof options.username === "string" ? options.username : this.defaults.username);
 
   this.clientList = {};
   this.socket = new WebSocket(this.options.host);
@@ -36,18 +39,21 @@ function Client(options ) {
   this.socket.onmessage = this.onmessage.bind(this);
   this.socket.onclose = this.onclose.bind(this);
 
-  var servers = {
-    'iceServers': [
-      { 'url': 'stun:stun.l.google.com:19302' },
-      { 'url': 'turn:130.206.83.161:3478' }
-    ]
-  };
+  var servers = undefined;
+  if (options !== undefined && options.iceServers !== undefined)
+    servers = { iceServers : options.iceServers } ;
+  else
+    servers = { iceServers : this.defaults.iceServers };
 
   this.peerConnection = new PeerConnectionHandler(this.socket, servers, this);
 
   if (argv.talk) {
     this.autoTalk();
   }
+  if (argv.test) {
+    this.testHandler = new TestsHandler(this);
+  }
+
 }
 
 Client.prototype.RTCsend = function( data ){
@@ -60,6 +66,8 @@ Client.prototype.RTCsend = function( data ){
 
 Client.prototype.domInit = function() {
   var that = this;
+  if (document.querySelector('.yournick') == null || document.querySelector('.yourmessage') == null)
+    return;
   document.querySelector('.yournick').onblur = function(event) {
     that.nick = event.target.value;
     that.sendIntroduction();
@@ -173,6 +181,7 @@ Client.prototype.onclose = function() {};
 
 Client.prototype.signalingMessageHandler = function(message) {
   console.log('Got', message.toString());
+  this.signalingMessages = 1;
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }
@@ -182,14 +191,14 @@ Client.prototype.signalingMessageHandler = function(message) {
   if (message.getType() === 'Offer') {
     this.peerConnection.onOffer(message);
   }
-
-  console.log(message);
 };
 
 Client.prototype.applicationMessageHandler = function(message) {
+  this.applicationMessages = 1;
   var payload = message.getDataProp('payload'), element;
-
   if (payload.hasOwnProperty('message')) {
+    if (document.querySelector('.messages') == null)
+      return;
     element = document.querySelector('.messages');
     var container = document.createElement('p');
     var name = document.createElement('span');
@@ -262,10 +271,18 @@ Client.prototype.roomMessageHandler = function(message) {
   console.log(message.toString());
 };
 
-module.exports = Client;
-var client = new Client(); // jslint ignore:line
+if (module !== undefined)
+  module.exports = Client;
+if (window !== undefined)
+{
+  window.CloudRenderingClient = Client;
+  window.CloudRenderingMessage = Message;
+  window.CloudRenderingPeerConnectionHandler = PeerConnectionHandler;
+}
 
-},{"../../signalingserver/lib/CRMessage":13,"../lib/ControlsHandler":2,"../lib/PeerConnection":3,"jquery-browserify":4,"lorem-ipsum":6,"querystring":10,"ws":12}],2:[function(require,module,exports){
+//var client = new Client(); // jslint ignore:line
+
+},{"../../signalingserver/lib/CRMessage":18,"../lib/ControlsHandler":2,"../lib/PeerConnection":3,"../lib/TestsHandler":4,"jquery-browserify":9,"lorem-ipsum":11,"querystring":15,"ws":17}],2:[function(require,module,exports){
 'use strict';
 var __ = require('underscore'), $ = require('jquery-browserify');
 
@@ -481,7 +498,7 @@ KeyboardHandler.prototype.setKeyboardContext = function(event) {
 
 module.exports = ControlsHandler;
 
-},{"jquery-browserify":4,"underscore":11}],3:[function(require,module,exports){
+},{"jquery-browserify":9,"underscore":16}],3:[function(require,module,exports){
 'use strict';
 var Message = require('../../signalingserver/lib/CRMessage');
 
@@ -559,6 +576,7 @@ PeerConnection.prototype.createStream = function() {
 
 PeerConnection.prototype.gotStream = function(stream) {
   console.log('Got stream', this);
+  this.videoStream = 1;
 
   this.initiateVideoElement({
     stream: stream
@@ -680,7 +698,195 @@ PeerConnection.prototype.gotRemoteIceCandidate = function(candidate) {
 
 module.exports = PeerConnection;
 
-},{"../../signalingserver/lib/CRMessage":13}],4:[function(require,module,exports){
+},{"../../signalingserver/lib/CRMessage":18}],4:[function(require,module,exports){
+var tests = require('./tests');
+var test;
+
+function Runner(test){
+	var runs = 0, maxRuns = 10, pause = 2000;
+	var tests, category;
+	var runnerInterval;
+
+	tests = test.tests;
+	category = test.category;
+
+	function setTestSuccess(test){
+		test.statusEl.innerHTML = test.success;
+		test.statusEl.className = 'test-status status-success';
+	};
+
+	function setTestFail(test){
+		test.statusEl.innerHTML = "Failure";
+		test.statusEl.className = 'test-status status-failure';
+	};
+
+	function failTests(){
+		var test;
+		for (var i = tests.length - 1; i >= 0; i--) {
+			test = tests[i];
+
+			if (!test.result){
+				setTestFail(test);
+			}
+		};
+	}
+
+	function runTest(test) {
+		if ( test.result ) {
+			return;
+		}
+
+		test.result = test.test();
+
+		if ( test.result ){
+			return setTestSuccess(test);
+		}
+
+	}
+
+	function initTests(){
+		var wrapElement, categoryElement, testElements = [];
+
+		wrapElement = document.createElement('div');
+		categoryElement = document.createElement('h3');
+		categoryElement.innerText = category;
+
+		wrapElement.appendChild( categoryElement );
+
+		for (var i = tests.length - 1; i >= 0; i--) {
+			var test = tests[i];
+
+			var testElement = document.createElement('div');
+			var testNameElement = document.createElement('span');
+			var testStatusElement = document.createElement('span');
+
+			testElement.className = 'test';
+			testNameElement.className = 'test-name';
+			testNameElement.innerText = test.name;
+			testStatusElement.className = 'test-status';
+			testStatusElement.innerText = 'Testing';
+
+			test.el = testElement;
+			test.statusEl = testStatusElement;
+
+			testElement.appendChild( testNameElement );
+			testElement.appendChild( testStatusElement );
+
+			wrapElement.appendChild( testElement );
+		};
+
+		var holder = document.getElementById('testsHolder');
+
+		holder.appendChild(wrapElement);
+	};
+
+	function iterateTests(){
+		runs++;
+		if (runs >= maxRuns) {
+			clearInterval( runnerInterval );
+			failTests();
+		}
+
+		for (var i = tests.length - 1; i >= 0; i--) {
+			runTest( tests[i] );
+		};
+	}
+
+	initTests();
+	runnerInterval = setInterval( iterateTests, pause);
+}
+
+function TestsHandler(scope){
+	var el = document.createElement('div');
+	var header = document.createElement('h2');
+	header.innerText = 'Tests';
+	el.appendChild( header );
+	el.id = 'testsHolder';
+	document.body.appendChild(el);
+
+	console.log('TestHandler init')
+
+	for (var i = tests.length - 1; i >= 0; i--) {
+		test = new tests[i](scope);
+		var r = new Runner(test);
+	};
+};
+module.exports = TestsHandler;
+
+},{"./tests":8}],5:[function(require,module,exports){
+function keyIsOfValue(object, objectPath, value){
+	var parts = objectPath.split('.');
+	for (var i = 1; i < parts.length; i++) {
+		console.log(parts[i], object, objectPath);
+		if ( !object.hasOwnProperty( parts[i] )) {
+			return false;
+		};
+		object = object[parts[i]];
+	};
+
+	return object == value;
+}
+
+function Test(scope) {
+	var test = {};
+	test.category = 'Signaling Server';
+	test.tests = [
+		{ name: 'Signaling Messages', success: 'Coming in', test: function(){ return keyIsOfValue( scope, 'scope.signalingMessages', 1) } },
+		{ name: 'Application messages', success: 'Working', test: function(){ return keyIsOfValue( scope, 'scope.applicationMessages', 1) } },
+		{ name: 'Websocket connection', success: 'Established', test: function(){ return keyIsOfValue( scope, 'scope.socket.readyState', 1) } }
+	];
+	return test;
+}
+
+module.exports = Test;
+},{}],6:[function(require,module,exports){
+function keyIsOfValue(object, objectPath, value){
+	var parts = objectPath.split('.');
+	for (var i = 1; i < parts.length; i++) {
+		console.log(parts[i], object, objectPath);
+		if ( !object.hasOwnProperty( parts[i] )) {
+			return false;
+		};
+		object = object[parts[i]];
+	};
+
+	return object == value;
+}
+
+function Test(scope) {
+	var test = {};
+	test.category = 'WebRTC';
+	test.tests = [
+		{ name: 'Data Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.channel.readyState', 1) } },
+		{ name: 'Video Channel', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.videoStream', 1) } },
+		{ name: 'WebRTC connection', success: 'Established', test: function(){ return keyIsOfValue(scope, 'scope.peerConnection.pc.iceConnectionState', 'connected')  } }
+	]
+	return test;
+}
+
+module.exports = Test;
+
+
+},{}],7:[function(require,module,exports){
+function Test(scope) {
+	var test = {};
+	test.category = 'Webserver';
+	test.tests = [
+		{ name: 'Web Client assets', success: 'Loaded', test: function(scope){ return window.hasOwnProperty('CloudRenderingClient'); } }
+	]
+	return test;
+}
+
+module.exports = Test;
+},{}],8:[function(require,module,exports){
+var tests = [];
+
+tests.push( require('./WebRTCTest'));
+tests.push( require('./SignalingServerTest'));
+tests.push( require('./WebserverTest'));
+
+module.exports = tests;
+},{"./SignalingServerTest":5,"./WebRTCTest":6,"./WebserverTest":7}],9:[function(require,module,exports){
 // Uses Node, AMD or browser globals to create a module.
 
 // If you want something that will work in other stricter CommonJS environments,
@@ -10014,7 +10220,7 @@ return jQuery;
 
 })( window ); }));
 
-},{}],5:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var dictionary = {
   words: [
     'ad',
@@ -10083,7 +10289,7 @@ var dictionary = {
 };
 
 module.exports = dictionary;
-},{}],6:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var generator = function() {
   var options = (arguments.length) ? arguments[0] : {}
     , count = options.count || 1
@@ -10188,7 +10394,7 @@ var generator = function() {
 
 module.exports = generator;
 
-},{"./dictionary":5,"inflection":7}],7:[function(require,module,exports){
+},{"./dictionary":10,"inflection":12}],12:[function(require,module,exports){
 /*!
  * inflection
  * Copyright(c) 2011 Ben Lin <ben@dreamerslab.com>
@@ -10816,7 +11022,7 @@ module.exports = generator;
   module.exports = inflector;
 })( this );
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10898,7 +11104,7 @@ module.exports = function(qs, sep, eq, options) {
   return obj;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10964,13 +11170,13 @@ module.exports = function(obj, sep, eq, name) {
          encodeURIComponent(stringifyPrimitive(obj));
 };
 
-},{}],10:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":8,"./encode":9}],11:[function(require,module,exports){
+},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
 //     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -12248,7 +12454,7 @@ exports.encode = exports.stringify = require('./encode');
 
 }).call(this);
 
-},{}],12:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -12293,7 +12499,7 @@ function ws(uri, protocols, opts) {
 
 if (WebSocket) ws.prototype = WebSocket.prototype;
 
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 function Message(channel, type, data) {

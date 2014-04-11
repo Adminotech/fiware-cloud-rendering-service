@@ -75,6 +75,7 @@ PeerConnection.prototype.createStream = function() {
 
 PeerConnection.prototype.gotStream = function(stream) {
   console.log('Got stream', this);
+  this.videoStream = 1;
 
   this.initiateVideoElement({
     stream: stream
