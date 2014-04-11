@@ -36,3 +36,20 @@ video {
   height: 200px;
   overflow: scroll;
 }
+#testsHolder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+}
+.test-status {
+  padding-right: 3px;
+  float: right;
+  text-align: right;
+}
+.status-success {
+  color: green;
+}
+.status-failure {
+  color: red;
+}

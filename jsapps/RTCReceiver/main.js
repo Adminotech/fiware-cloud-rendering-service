@@ -6,6 +6,7 @@ var WebSocket = require('ws'),
   loremIpsum = require('lorem-ipsum'),
   PeerConnectionHandler = require('../lib/PeerConnection'),
   ControlsHandler = require('../lib/ControlsHandler'),
+  TestsHandler = require('../lib/TestsHandler'),
   argv = require('querystring').parse(window.location.search.substr(1));
 
 function Client(options) {
@@ -48,6 +49,10 @@ function Client(options) {
   if (argv.talk) {
     this.autoTalk();
   }
+  if (argv.test) {
+    this.testHandler = new TestsHandler(this);
+  }
+
 }
 
 Client.prototype.RTCsend = function( data ){
@@ -175,6 +180,7 @@ Client.prototype.onclose = function() {};
 
 Client.prototype.signalingMessageHandler = function(message) {
   console.log('Got', message.toString());
+  this.signalingMessages = 1;
   if (message.getType() === 'Answer') {
     this.peerConnection.onAnswer(message);
   }
@@ -184,11 +190,10 @@ Client.prototype.signalingMessageHandler = function(message) {
   if (message.getType() === 'Offer') {
     this.peerConnection.onOffer(message);
   }
-
-  console.log(message);
 };
 
 Client.prototype.applicationMessageHandler = function(message) {
+  this.applicationMessages = 1;
   var payload = message.getDataProp('payload'), element;
   if (payload.hasOwnProperty('message')) {
     if (document.querySelector('.messages') == null)

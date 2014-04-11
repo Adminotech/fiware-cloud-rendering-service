@@ -13,8 +13,10 @@
     <input type="text" class="yournick" placeholder="Nickname">
     <input type="text" class="yourmessage" placeholder="Type a message">
 </div>
+
 <script>
 var cloudRenderingClient = new CloudRenderingClient();
 </script>
+
 </body>
 </html>
