@@ -14,9 +14,9 @@ var gumTests = function (req, res) {
 
 var service = function (req, res) {
     if (req.params.type == 'receiver'){
-        res.render( 'serviceReceiver' );
+        res.render( 'servicereceiver' );
     } else if ( req.params.type == 'server'){
-        res.render( 'serviceSender' );
+        res.render( 'servicesender' );
     } else {
         res.render( '' );
     }
