@@ -105,14 +105,14 @@ PeerConnection.prototype.onOffer = function(message) {
   sdp = new SessionDescription( data );
 
   console.info('Adding sdp', data);
-  this.pc.setRemoteDescription(sdp);
+  this.pc.setRemoteDescription(sdp, function() { console.log('SDP added'); }, function(err) { console.log('Error adding SDP', err); });
 
   ices = message.getDataProp('iceCandidates');
   for (var i = 0; i < ices.length; i++) {
     var ice = ices[i];
     this.gotRemoteIceCandidate(ice);
   }
-  this.pc.createAnswer(this.sendAnswer.bind(this));
+  this.pc.createAnswer(this.sendAnswer.bind(this), function(err) { console.log("Error creating answer", err); });
 };
 
 PeerConnection.prototype.sendAnswer = function(description) {
