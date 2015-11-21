@@ -12,7 +12,7 @@ function PeerConnection(client, servers, parent) {
 
 PeerConnection.prototype.initiatePeerConnection = function() {
   var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true} ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onaddstream = this.initiateVideoElement.bind(this);
@@ -24,7 +24,7 @@ PeerConnection.prototype.initiatePeerConnection = function() {
 
 PeerConnection.prototype.startRendererPeerConnection = function() {
   var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true} ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onstatechange = this.onStateChange.bind(this);
