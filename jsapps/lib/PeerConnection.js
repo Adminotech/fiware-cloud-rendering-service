@@ -102,7 +102,7 @@ PeerConnection.prototype.onOffer = function(message) {
   var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
-  sdp = new RTCSessionDescription( data );
+  sdp = new SessionDescription( data );
 
   console.info('Adding sdp', data);
   this.pc.setRemoteDescription(sdp);
@@ -136,9 +136,10 @@ PeerConnection.prototype.gotLocalDescription = function(description) {
 };
 
 PeerConnection.prototype.onAnswer = function(message) {
+  var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
-  sdp = new RTCSessionDescription({
+  sdp = new SessionDescription({
     sdp: data.data,
     type: data.type
   });
@@ -190,8 +191,9 @@ PeerConnection.prototype.addRemoteIce = function(){
 };
 
 PeerConnection.prototype.gotRemoteIceCandidate = function(candidate) {
+  var IceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
   candidate = JSON.parse( JSON.stringify( candidate ));
-  var c = new RTCIceCandidate( candidate );
+  var c = new IceCandidate( candidate );
   this.pc.addIceCandidate( c );
 };
 
