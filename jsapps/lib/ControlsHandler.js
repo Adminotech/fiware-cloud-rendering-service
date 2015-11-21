@@ -68,6 +68,7 @@ function MouseHandler(element, cb) { // jshint ignore:line
   $(this.el).mousedown( this.mousedown.bind(this) );
   $(this.el).dblclick( this.dblclick.bind(this) );
   $(document).mouseup( this.mouseup.bind(this) );
+  $(this.el).on("wheel", this.mousewheel.bind(this));
 
   this.setUnits();
   $(window).resize( this.setUnits.bind(this) );
@@ -106,12 +107,18 @@ MouseHandler.prototype.mousemove = function( event ) {
   this.send( this.buildMessage( 'move', event ) );
 };
 
+MouseHandler.prototype.mousewheel = function( event ) {
+  this.send( this.buildMessage( 'wheel', event.originalEvent ) );
+  //inhibit scrolling
+  return false;
+};
+
 MouseHandler.prototype.buildMessage = function( action, event ) {
   var x, y;
   x = (event.pageX - this.offset.left ) / this.width;
   y = (event.pageY - this.offset.top ) / $(this.el).height();//this.height
 
-  return {
+  var msg = {
     type: 'InputMouse',
     action: action,
     altKey:  event.altKey,
@@ -125,6 +132,12 @@ MouseHandler.prototype.buildMessage = function( action, event ) {
     x: x,
     y: y
   };
+  
+  if (event.type == "wheel") {
+    msg['deltaX'] = event.deltaX;
+    msg['deltaY'] = event.deltaY;
+  }
+  return msg;
 };
 
 function KeyboardHandler(element, cb) { // jslint ignore:line
