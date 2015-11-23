@@ -72,7 +72,7 @@ Room.prototype.distributeMessage = function(message, client) {
   };
   // Add sender info to data;
   var data = message.getDataProp('payload');
-  data.senderId = client.peerId;
+  //data.senderId = client.peerId;
   message.setDataProp('payload', data);
 
   if (!message.getDataProp('receivers')) {

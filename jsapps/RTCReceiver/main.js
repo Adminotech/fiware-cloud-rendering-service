@@ -16,7 +16,6 @@ function Client(options) {
     username : loremIpsum({ count: 1, units: 'words' }),
     iceServers : [
       { 'url': 'stun:stun.l.google.com:19302' },
-      { 'url': 'turn:130.206.83.161:3478' }
     ]
   };
 

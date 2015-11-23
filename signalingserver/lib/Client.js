@@ -22,7 +22,7 @@ Client.prototype.generalMessageHandler = function(message) {
 
 Client.prototype.applicationMessageHandler = function(message, scope) {
   scope = scope || this;
-  if (message.getType() === 'RoomCustomMessage') {
+  if (scope.room && message.getType() === 'RoomCustomMessage') {
     scope.room.distributeMessage(message, scope);
   }
 };

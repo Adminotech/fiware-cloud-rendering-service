@@ -12,7 +12,7 @@ function PeerConnection(client, servers, parent) {
 
 PeerConnection.prototype.initiatePeerConnection = function() {
   var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true} ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onaddstream = this.initiateVideoElement.bind(this);
@@ -24,7 +24,7 @@ PeerConnection.prototype.initiatePeerConnection = function() {
 
 PeerConnection.prototype.startRendererPeerConnection = function() {
   var RTC = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true}, { RtpDataChannels: true } ] });
+  this.pc = new RTC(this.servers, { optional: [ {DtlsSrtpKeyAgreement: true} ] });
 
   this.pc.onicecandidate = this.onIceCandidate.bind(this);
   this.pc.onstatechange = this.onStateChange.bind(this);
@@ -102,17 +102,17 @@ PeerConnection.prototype.onOffer = function(message) {
   var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
-  sdp = new RTCSessionDescription( data );
+  sdp = new SessionDescription( data );
 
   console.info('Adding sdp', data);
-  this.pc.setRemoteDescription(sdp);
+  this.pc.setRemoteDescription(sdp, function() { console.log('SDP added'); }, function(err) { console.log('Error adding SDP', err); });
 
   ices = message.getDataProp('iceCandidates');
   for (var i = 0; i < ices.length; i++) {
     var ice = ices[i];
     this.gotRemoteIceCandidate(ice);
   }
-  this.pc.createAnswer(this.sendAnswer.bind(this));
+  this.pc.createAnswer(this.sendAnswer.bind(this), function(err) { console.log("Error creating answer", err); });
 };
 
 PeerConnection.prototype.sendAnswer = function(description) {
@@ -136,9 +136,10 @@ PeerConnection.prototype.gotLocalDescription = function(description) {
 };
 
 PeerConnection.prototype.onAnswer = function(message) {
+  var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
   var data, sdp, ices;
   data = message.getDataProp('sdp');
-  sdp = new RTCSessionDescription({
+  sdp = new SessionDescription({
     sdp: data.data,
     type: data.type
   });
@@ -190,8 +191,9 @@ PeerConnection.prototype.addRemoteIce = function(){
 };
 
 PeerConnection.prototype.gotRemoteIceCandidate = function(candidate) {
+  var IceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
   candidate = JSON.parse( JSON.stringify( candidate ));
-  var c = new RTCIceCandidate( candidate );
+  var c = new IceCandidate( candidate );
   this.pc.addIceCandidate( c );
 };
 
