@@ -1,6 +1,6 @@
 site_name: FIWARE Cloud Renderer
-site_url: https://cloudrenderer.readthedocs.org
-repo_url: https://github.com/tospie/fiware-cloud-rendering-service.git
+site_url: https://cloud-renderer.readthedocs.io
+repo_url: https://github.com/Adminotech/fiware-cloud-rendering-service.git
 site_description: Cloud Renderer - Documentation
 docs_dir: doc
 markdown_extensions: [toc,fenced_code]
@@ -8,6 +8,7 @@ use_directory_urls: false
 theme: readthedocs
 extra_css: ["https://fiware.org/style/fiware_readthedocs.css"]
 pages:
-  - Home: index.md  
-  - 'User & Programmers Manual': 'user_guide.md'      
+  - Home: index.md
+  - 'User & Programmers Manual': 'user_guide.md'
   - 'Installation & Administration Manual': 'installation_guide.md'
+google_analytics: ['UA-83869420-3', 'http://cloud-renderer.readthedocs.io']
